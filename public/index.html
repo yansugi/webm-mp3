@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>webm → mp3 変換</title>
+  <title>webm → mp3 / mp4 変換</title>
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -18,7 +18,7 @@
         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
       </div>
       <div>
-        <h1><span class="fmt">webm</span><span class="arrow">→</span><span class="fmt fmt-mp3">mp3</span></h1>
+        <h1><span class="fmt">webm</span><span class="arrow">→</span><span class="fmt fmt-mp3">mp3 / mp4</span></h1>
         <p class="note">🔒 ファイルはこのPC内で変換され、外部には送信されません</p>
       </div>
     </header>
@@ -45,7 +45,31 @@
 
     <section class="settings">
       <label>
-        <span class="label-text">🎚️ ビットレート</span>
+        <span class="label-text">📦 出力形式</span>
+        <select id="format">
+          <option value="mp3" selected>mp3（音声のみ）</option>
+          <option value="mp4">mp4（映像＋音声）</option>
+        </select>
+      </label>
+      <label class="video-opt" hidden>
+        <span class="label-text">🖥️ 解像度</span>
+        <select id="resolution">
+          <option value="orig">元のまま</option>
+          <option value="1080">1080p 以下</option>
+          <option value="720" selected>720p 以下</option>
+          <option value="480">480p 以下</option>
+        </select>
+      </label>
+      <label class="video-opt" hidden>
+        <span class="label-text">🎞️ 画質（変換速度）</span>
+        <select id="quality">
+          <option value="high">高画質（遅い）</option>
+          <option value="standard" selected>標準</option>
+          <option value="fast">高速（画質は低め）</option>
+        </select>
+      </label>
+      <label>
+        <span class="label-text" id="bitrateLabel">🎚️ ビットレート</span>
         <select id="bitrate">
           <option value="128">128 kbps（標準）</option>
           <option value="192" selected>192 kbps（高音質）</option>
@@ -62,6 +86,8 @@
         <input id="endTime" type="text" placeholder="例: 1:45（空欄=最後）">
       </label>
     </section>
+
+    <p id="videoNote" class="video-note" hidden>⚠️ mp4への変換は、ブラウザ内で映像を再エンコードするため時間がかかります（目安: 動画の長さの数倍〜）。解像度を下げ、画質を「高速」にすると速くなります。</p>
 
     <div class="buttons">
       <button id="convertBtn" disabled>✨ mp3に変換</button>

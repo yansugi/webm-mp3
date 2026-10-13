@@ -1,20 +1,24 @@
-// webm → mp3 変換アプリ本体（ffmpeg.wasm をブラウザ内で実行する）
+// webm → mp3 / mp4 変換アプリ本体（ffmpeg.wasm をブラウザ内で実行する）
 import { FFmpeg } from '/vendor/ffmpeg/index.js';
 import { createWaveform } from './waveform.js';
+import { FORMATS, buildFfmpegArgs } from './ffmpeg-args.js';
 
 const SIZE_WARN_BYTES = 1024 * 1024 * 1024; // これを超えると失敗の可能性が高い旨を警告する（入力はWORKERFSでコピーしないが出力・wasm上限に依存）
 const MOUNT_DIR = '/mnt';                    // WORKERFSのマウント先
 const INPUT_NAME = 'input.webm';             // マウント時に付ける固定名（元のファイル名に依存しないため）
 const INPUT_PATH = `${MOUNT_DIR}/${INPUT_NAME}`;
-const OUTPUT_NAME = 'output.mp3';
+const OUTPUT_NAMES = Object.values(FORMATS).map((f) => f.output); // 掃除対象の出力ファイル名
 const WAVE_NAME = 'wave.pcm';                // 波形用の一時ファイル
 const WAVE_RATE = 4000;                      // 波形用PCMのサンプリングレート（Hz）。低くして軽量化する
-const NO_AUDIO_MESSAGE = 'このwebmファイルには音声トラックが含まれていないため、mp3に変換できません。\n（画面録画で「音声を共有」をオフにして録画したファイルなどが該当します）';
+const NO_AUDIO_MESSAGE = 'このwebmファイルには音声トラックが含まれていないため、mp3に変換できません。\n（画面録画で「音声を共有」をオフにして録画したファイルなどが該当します。映像のみのmp4には変換できます）';
+const NO_VIDEO_MESSAGE = 'このwebmファイルには映像トラックが含まれていないため、mp4に変換できません。\n（音声のみの録音ファイルが該当します。mp3には変換できます）';
 
 const $ = (id) => document.getElementById(id);
 const el = {
   dropzone: $('dropzone'), dropText: $('dropText'), fileInput: $('fileInput'),
   bitrate: $('bitrate'), startTime: $('startTime'), endTime: $('endTime'),
+  format: $('format'), resolution: $('resolution'), quality: $('quality'),
+  bitrateLabel: $('bitrateLabel'), videoNote: $('videoNote'), videoOpts: document.querySelectorAll('.video-opt'),
   convertBtn: $('convertBtn'), cancelBtn: $('cancelBtn'),
   progress: $('progress'), status: $('status'), error: $('error'), result: $('result'),
   wave: $('wave'), waveInfo: $('waveInfo'), waveScroll: $('waveScroll'), waveScrollInner: $('waveScrollInner'),
@@ -65,11 +69,31 @@ function setProgress(percent) {
  */
 function setBusy(kind) {
   busyKind = kind;
-  el.convertBtn.disabled = kind !== null || !selectedFile || audioMissing;
+  // 音声が無い入力は、mp3 には変換できない（映像のみの mp4 は可能）
+  const blockedByNoAudio = audioMissing && el.format.value === 'mp3';
+  el.convertBtn.disabled = kind !== null || !selectedFile || blockedByNoAudio;
   el.cancelBtn.hidden = kind === null;
   // 変換中だけ設定の変更を禁止する（波形生成中は時間入力などを先に触れる）
-  el.bitrate.disabled = el.startTime.disabled = el.endTime.disabled = kind === 'convert';
-  waveform.setEnabled(kind !== 'convert');
+  const locked = kind === 'convert';
+  el.format.disabled = el.resolution.disabled = el.quality.disabled = locked;
+  el.bitrate.disabled = el.startTime.disabled = el.endTime.disabled = locked;
+  waveform.setEnabled(!locked);
+}
+
+/** 出力形式の変更に合わせて、映像用の設定・注意書き・ボタン文言・エラー表示を切り替える */
+function onFormatChange() {
+  const isMp4 = el.format.value === 'mp4';
+  el.videoOpts.forEach((node) => { node.hidden = !isMp4; });
+  el.videoNote.hidden = !isMp4;
+  el.bitrateLabel.textContent = isMp4 ? '🎚️ 音声ビットレート' : '🎚️ ビットレート';
+  el.convertBtn.textContent = `✨ ${el.format.value}に変換`;
+  el.result.hidden = true; // 別形式の結果リンクが残らないようにする
+  if (audioMissing) {
+    // 音声が無い入力: mp3 ならエラー、mp4 なら映像のみになる旨を案内する
+    showError(isMp4 ? '' : NO_AUDIO_MESSAGE);
+    if (isMp4) setStatus('このファイルには音声トラックがないため、映像のみのmp4になります。');
+  }
+  setBusy(busyKind);
 }
 
 /**
@@ -109,19 +133,15 @@ function parseTime(text, label) {
  * @throws {Error} 時間指定が不正な場合
  */
 function buildArgs() {
-  const start = parseTime(el.startTime.value, '開始時間');
-  const end = parseTime(el.endTime.value, '終了時間');
-  if (start !== null && end !== null && end <= start) {
-    throw new Error('終了時間は開始時間より後にしてください');
-  }
-
-  const args = [];
-  if (start !== null) args.push('-ss', String(start)); // 入力前に指定すると高速にシークできる
-  args.push('-i', INPUT_PATH);
-  if (end !== null) args.push('-t', String(end - (start ?? 0)));
-  // -vn: 映像を除外して音声のみを取り出す
-  args.push('-vn', '-codec:a', 'libmp3lame', '-b:a', `${el.bitrate.value}k`, OUTPUT_NAME);
-  return args;
+  return buildFfmpegArgs({
+    format: el.format.value,
+    inputPath: INPUT_PATH,
+    start: parseTime(el.startTime.value, '開始時間'),
+    end: parseTime(el.endTime.value, '終了時間'),
+    audioBitrate: el.bitrate.value,
+    resolution: el.resolution.value,
+    quality: el.quality.value,
+  });
 }
 
 /** 新しいFFmpegインスタンスを作成してイベントを登録する */
@@ -506,6 +526,8 @@ async function convert() {
   cancelled = false;
   ffmpegLog = [];
 
+  const format = el.format.value; // 変換中に設定が変わっても、開始時点の形式で一貫させる
+  const spec = FORMATS[format];
   let args;
   try {
     args = buildArgs();
@@ -521,23 +543,29 @@ async function convert() {
     await ensureLoaded();
     await mountInput(selectedFile);
 
-    setStatus('変換中…');
+    setStatus(format === 'mp4' ? '変換中…（映像の再エンコードには時間がかかります）' : '変換中…');
     const code = await ffmpeg.exec(args);
     if (cancelled) return;
     if (code !== 0) throw new Error(`ffmpegがエラー終了しました（コード ${code}）`);
 
-    const out = await ffmpeg.readFile(OUTPUT_NAME);
+    const out = await ffmpeg.readFile(spec.output);
     if (!out || out.length === 0) throw new Error('出力ファイルが空です。時間指定が音声の長さを超えている可能性があります。');
-    showResult(out);
+    showResult(out, spec);
     setProgress(100);
     setStatus('変換が完了しました。');
   } catch (e) {
     if (cancelled) return; // 中止時はエラー扱いにしない
     console.error(e, ffmpegLog.join('\n'));
-    // 音声トラックが無い入力（映像のみのwebm）は専用の文言で案内する
-    if (ffmpegLog.some((l) => l.includes('does not contain any stream'))) {
+    // 入力にトラックが無い場合（音声なし→mp3、映像なし→mp4）は専用の文言で案内する
+    if (format === 'mp3' && ffmpegLog.some((l) => l.includes('does not contain any stream'))) {
       audioMissing = true;
       showError(NO_AUDIO_MESSAGE);
+      setStatus('');
+      setProgress(null);
+      return;
+    }
+    if (format === 'mp4' && ffmpegLog.some((l) => l.includes('matches no streams'))) {
+      showError(NO_VIDEO_MESSAGE);
       setStatus('');
       setProgress(null);
       return;
@@ -548,19 +576,23 @@ async function convert() {
     setProgress(null);
   } finally {
     // 次回のためにマウント解除と出力ファイルの掃除を行う
-    if (!cancelled) await cleanupEngine([OUTPUT_NAME]);
+    if (!cancelled) await cleanupEngine(OUTPUT_NAMES);
     isMounted = false;
     setBusy(null);
   }
 }
 
-/** 変換結果のダウンロードリンクを表示する */
-function showResult(bytes) {
+/**
+ * 変換結果のダウンロードリンクを表示する
+ * @param {Uint8Array} bytes 変換結果
+ * @param {{mime: string, ext: string}} spec 出力形式の定義
+ */
+function showResult(bytes, spec) {
   if (objectUrl) URL.revokeObjectURL(objectUrl);
-  objectUrl = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }));
+  objectUrl = URL.createObjectURL(new Blob([bytes], { type: spec.mime }));
   const a = document.createElement('a');
   a.href = objectUrl;
-  a.download = selectedFile.name.replace(/\.webm$/i, '') + '.mp3';
+  a.download = `${selectedFile.name.replace(/\.webm$/i, '')}.${spec.ext}`;
   a.textContent = `${a.download} をダウンロード（${(bytes.length / 1024 / 1024).toFixed(2)} MB）`;
   el.result.replaceChildren(a);
   el.result.hidden = false;
@@ -602,6 +634,7 @@ el.dropzone.addEventListener('drop', (e) => {
   const file = e.dataTransfer.files[0];
   if (file) selectFile(file);
 });
+el.format.addEventListener('change', onFormatChange);
 el.convertBtn.addEventListener('click', convert);
 el.cancelBtn.addEventListener('click', cancel);
 el.playBtn.addEventListener('click', togglePlay);
@@ -616,6 +649,8 @@ el.waveScroll.addEventListener('scroll', onScrollbarScroll);
 el.startTime.addEventListener('input', syncSelectionFromInputs);
 el.endTime.addEventListener('input', syncSelectionFromInputs);
 window.addEventListener('resize', () => waveform.draw());
+
+onFormatChange(); // 再読み込み時にブラウザが復元した選択値に、表示を合わせる
 
 if (typeof WebAssembly === 'undefined') {
   showError('このブラウザはWebAssemblyに対応していません。最新のChromeまたはEdgeをお使いください。');

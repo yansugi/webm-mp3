@@ -13,6 +13,9 @@
 
 * { box-sizing: border-box; }
 
+/* hidden 属性を display 指定より優先させる（label の display:grid などに負けないように） */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -122,10 +125,15 @@ button.tool:disabled { background: #26324f; color: #b4c0d3; border-color: transp
 #waveInfo { margin: 8px 0 0; color: var(--muted); font-size: .92rem; text-align: center; }
 
 /* 設定 */
-.settings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 22px 0; }
-.settings label { display: grid; gap: 6px; }
+.settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 22px 0; }
+.video-note {
+  margin: 0 0 14px; padding: 10px 14px; font-size: .92rem; color: #fde68a;
+  background: rgba(120, 53, 15, .35); border: 1px solid rgba(251, 191, 36, .4); border-radius: 12px;
+}
+.settings label { display: grid; gap: 6px; min-width: 0; } /* 中身が長くても、隣の欄にはみ出さない */
 .label-text { font-size: .95rem; font-weight: 600; color: #dbeafe; }
 .settings input, .settings select {
+  width: 100%; min-width: 0; /* 欄の幅に収める（選択肢の文字が長くても、はみ出して隣と重ならないように） */
   padding: 12px 14px; font-size: 1.05rem; font-family: inherit; color: var(--ink);
   background: #1a2547; border: 1px solid var(--line); border-radius: 12px; /* カード背景より明るくして入力欄を浮かせる */
   transition: border-color .2s, box-shadow .2s;

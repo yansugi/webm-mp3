@@ -15,7 +15,7 @@ public sealed class MainForm : Form
     /// <summary>ウィンドウを初期化し、表示後にWebView2を準備する</summary>
     public MainForm()
     {
-        Text = "webm → mp3 変換";
+        Text = "webm → mp3 / mp4 変換";
         Width = 1280;
         Height = 900;
         StartPosition = FormStartPosition.CenterScreen;
@@ -103,10 +103,15 @@ public sealed class MainForm : Form
     {
         try
         {
+            // 拡張子（.mp3 / .mp4 など）に応じて保存ダイアログのフィルタを切り替える
+            var ext = Path.GetExtension(e.ResultFilePath);
+            var label = string.IsNullOrEmpty(ext) ? "ファイル" : $"{ext.TrimStart('.').ToUpperInvariant()} ファイル";
             using var dialog = new SaveFileDialog
             {
                 FileName = Path.GetFileName(e.ResultFilePath),
-                Filter = "MP3 ファイル (*.mp3)|*.mp3|すべてのファイル (*.*)|*.*",
+                Filter = string.IsNullOrEmpty(ext)
+                    ? "すべてのファイル (*.*)|*.*"
+                    : $"{label} (*{ext})|*{ext}|すべてのファイル (*.*)|*.*",
                 OverwritePrompt = true,
             };
 
