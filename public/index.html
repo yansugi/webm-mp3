@@ -29,6 +29,20 @@
       <input id="fileInput" type="file" accept=".webm,video/webm,audio/webm" hidden>
     </div>
 
+    <section id="waveWrap" hidden>
+      <div class="wave-tools">
+        <button type="button" class="tool play" id="playBtn" title="再生 / 一時停止（波形の上でスペースキー）" disabled>▶ 再生</button>
+        <button type="button" class="tool" id="zoomOut" title="縮小（-キー）" aria-label="縮小">－</button>
+        <button type="button" class="tool" id="zoomIn" title="拡大（+キー）" aria-label="拡大">＋</button>
+        <button type="button" class="tool" id="zoomFit" title="全体を表示（0キー）">全体</button>
+        <button type="button" class="tool" id="zoomSel" title="選択範囲を拡大" disabled>選択範囲へ</button>
+        <span class="tool-hint">ホイール: 拡大縮小 ／ Shift+ホイール: 移動 ／ クリック: 再生位置 ／ スペース: 再生</span>
+      </div>
+      <canvas id="wave" tabindex="0" role="img" aria-label="音声の波形。ドラッグで開始・終了の範囲を選択、クリックで解除。プラスとマイナスのキーで拡大縮小、左右キーで移動"></canvas>
+      <div id="waveScroll" role="group" aria-label="表示位置のスクロールバー"><div id="waveScrollInner"></div></div>
+      <p id="waveInfo"></p>
+    </section>
+
     <section class="settings">
       <label>
         <span class="label-text">🎚️ ビットレート</span>

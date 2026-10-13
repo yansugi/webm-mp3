@@ -16,8 +16,8 @@ public sealed class MainForm : Form
     public MainForm()
     {
         Text = "webm → mp3 変換";
-        Width = 1000;
-        Height = 800;
+        Width = 1280;
+        Height = 900;
         StartPosition = FormStartPosition.CenterScreen;
         ApplyIcon();
         Controls.Add(_webView);

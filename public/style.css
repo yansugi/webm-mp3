@@ -37,7 +37,7 @@ body {
 .card {
   position: relative;
   z-index: 1;
-  max-width: 660px;
+  max-width: 1120px;
   margin: 32px auto;
   padding: 28px 28px 32px;
   background: var(--panel);
@@ -83,8 +83,46 @@ h1 { margin: 0; font-size: 1.9rem; letter-spacing: .02em; line-height: 1.1; }
   box-shadow: 0 0 0 6px rgba(56, 189, 248, .2), 0 0 36px rgba(56, 189, 248, .3);
 }
 
+/* 波形 */
+#waveWrap { margin-top: 18px; }
+#wave {
+  display: block; width: 100%; height: 160px;
+  background: #0f1838; border: 1px solid var(--line); border-radius: 12px;
+  cursor: crosshair; touch-action: none; user-select: none;
+}
+#wave:focus-visible { outline: 2px solid var(--accent-1); outline-offset: 2px; }
+#wave.disabled { cursor: not-allowed; opacity: .6; }
+
+/* 拡大縮小のツールバー */
+.wave-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+button.tool {
+  flex: none; padding: 6px 12px; font-size: .95rem; font-weight: 600; color: var(--ink);
+  background: #1a2547; border: 1px solid var(--line); border-radius: 10px; box-shadow: none;
+}
+button.tool:hover:not(:disabled) { background: #243569; transform: none; box-shadow: none; filter: none; border-color: var(--accent-1); }
+button.tool.play {
+  min-width: 118px; margin-right: 8px; color: #fff; border-color: transparent;
+  background: linear-gradient(135deg, var(--accent-2), #0ea5e9);
+}
+button.tool.play:hover:not(:disabled) { background: linear-gradient(135deg, #6366f1, #38bdf8); border-color: transparent; }
+button.tool:disabled { background: #26324f; color: #b4c0d3; border-color: transparent; cursor: not-allowed; }
+.tool-hint { margin-left: auto; color: var(--muted); font-size: .8rem; }
+
+/* 表示位置のスクロールバー（ブラウザ標準のスクロールバーを使う。つまみの長さ＝表示中の割合） */
+#waveScroll {
+  width: 100%; height: 16px; margin-top: 6px;
+  overflow-x: scroll; overflow-y: hidden;
+  scrollbar-color: #6b7db3 #1a2547; /* つまみ / トラック（Firefox等） */
+}
+#waveScrollInner { height: 1px; }
+#waveScroll::-webkit-scrollbar { height: 16px; }
+#waveScroll::-webkit-scrollbar-track { background: #1a2547; border-radius: 8px; }
+#waveScroll::-webkit-scrollbar-thumb { background: #6b7db3; border-radius: 8px; border: 3px solid #1a2547; }
+#waveScroll::-webkit-scrollbar-thumb:hover { background: #8da0d6; }
+#waveInfo { margin: 8px 0 0; color: var(--muted); font-size: .92rem; text-align: center; }
+
 /* 設定 */
-.settings { display: grid; gap: 14px; margin: 22px 0; }
+.settings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 22px 0; }
 .settings label { display: grid; gap: 6px; }
 .label-text { font-size: .95rem; font-weight: 600; color: #dbeafe; }
 .settings input, .settings select {
@@ -144,10 +182,6 @@ progress::-webkit-progress-value {
 #result a:hover { transform: translateY(-2px) scale(1.02); }
 @keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-@media (max-width: 520px) {
-  .card { margin: 12px; padding: 20px 16px 24px; border-radius: 18px; }
-  h1 { font-size: 1.5rem; }
-}
 @media (prefers-reduced-motion: reduce) {
   .blob, .drop-icon, #result a { animation: none; }
 }
