@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <AssemblyName>WebmMp3</AssemblyName>
+    <RootNamespace>WebmMp3</RootNamespace>
+    <!-- 日本語リソースなどの不要なサテライトアセンブリを出力しない -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 版は完全一致で固定する（範囲指定・プレリリースは使わない） -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="[1.0.4191.47]" />
+  </ItemGroup>
+
+  <!-- 画面(public)とffmpeg.wasm一式を、出力先の www/ 配下に配置する -->
+  <ItemGroup>
+    <Content Include="..\public\**\*" Link="www\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\node_modules\@ffmpeg\ffmpeg\dist\esm\*.js" Link="www\vendor\ffmpeg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\node_modules\@ffmpeg\core\dist\esm\ffmpeg-core.js" Link="www\vendor\core\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\node_modules\@ffmpeg\core\dist\esm\ffmpeg-core.wasm" Link="www\vendor\core\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
