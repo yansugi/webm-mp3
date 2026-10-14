@@ -39,9 +39,9 @@ Jitsi Meet の録画ファイル（webm）を、mp3（音声のみ）または m
 ### A. デスクトップアプリ（WebView2 版・Windows）
 
 `WebmMp3.exe` を実行するだけで使えます。サーバーの起動は不要です。
+配布版（[Releases](https://github.com/yansugi/webm-mp3/releases)）は .NET を同梱しているので、.NET のインストールは不要です。
 
 **必要なもの**
-- .NET 8 デスクトップランタイム
 - Microsoft Edge WebView2 ランタイム（Windows 11 は標準搭載）
 
 > ネットワーク共有上の exe は、.NET のセキュリティ制限で動かないことがあります。各自の PC のローカルにコピーして実行してください。
@@ -51,10 +51,11 @@ Jitsi Meet の録画ファイル（webm）を、mp3（音声のみ）または m
 ```powershell
 npm ci
 cd app
-dotnet publish -c Release -r win-x64 --self-contained false -o publish
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o publish
 ```
 
-`app\publish\` に出力されます。配布するときは、このフォルダ一式を渡します。
+`app\publish\` に出力されます。配布するときは、`WebmMp3.exe` と `www\` フォルダ（と、ライセンス表記の `THIRD_PARTY_NOTICES.txt`）を渡します。
+単一ファイルの exe は、初回の起動時に一時フォルダ（`%TEMP%\.net`）へ一部のファイルを展開します。
 
 ### B. ローカルサーバー（ブラウザ版）
 
@@ -119,3 +120,6 @@ requirements.md  要件定義書
 ## ライセンス
 
 再配布・販売は禁止です。
+
+ただし、同梱・利用している第三者のコンポーネント（GPL の ffmpeg.wasm コアなど）には、それぞれのライセンスが適用されます。
+詳細は [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) を参照してください。

@@ -1,0 +1,49 @@
+サードパーティの構成要素（Third-party components）
+==================================================
+
+このソフトウェア本体のコード（www/ の index.html・app.js・waveform.js・ffmpeg-args.js・style.css、
+および WebmMp3.exe / WebmMp3.dll）には、「再配布・販売は禁止」という条件が適用されます。
+
+ただし、下記の第三者のコンポーネントには、この条件は適用されません。
+それぞれのライセンスに従います。
+
+
+1. FFmpeg（ffmpeg.wasm コア）
+   場所: www/vendor/core/ffmpeg-core.js, www/vendor/core/ffmpeg-core.wasm
+   パッケージ: @ffmpeg/core 0.12.10（パッケージの license 表記: GPL-2.0-or-later）
+   内容: FFmpeg 5.1.4 を WebAssembly にビルドしたもの。
+         このビルドは GPL 有効（--enable-gpl）で、次のライブラリを含みます。
+         libx264, libx265, libvpx, libmp3lame, libopus, libvorbis, libtheora,
+         libwebp, libass, libfreetype, libfribidi, libzimg, zlib
+   条件: GPL-2.0-or-later の条件に従います。このコンポーネントは、GPL の条件のもとで、
+         使用・改変・再配布できます。
+   ソースコード・ライセンスの入手先:
+         ffmpeg.wasm（ビルド定義）: https://github.com/ffmpegwasm/ffmpeg.wasm
+         FFmpeg                   : https://ffmpeg.org/download.html
+         x264                     : https://www.videolan.org/developers/x264.html
+         GPL-2.0 全文             : https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+
+2. @ffmpeg/ffmpeg 0.12.15
+   場所: www/vendor/ffmpeg/*.js
+   ライセンス: MIT（パッケージの license 表記より）
+   リポジトリ: https://github.com/ffmpegwasm/ffmpeg.wasm
+
+
+3. Microsoft.Web.WebView2 1.0.4191.47
+   場所: Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.WinForms.dll,
+         Microsoft.Web.WebView2.Wpf.dll, WebView2Loader.dll, runtimes/
+   ライセンス: Microsoft のライセンス条項。
+               licenses/WebView2-LICENSE.txt と licenses/WebView2-NOTICE.txt を参照してください。
+
+
+4. .NET 8 ランタイム（Microsoft.NETCore.App / Microsoft.WindowsDesktop.App）
+   場所: WebmMp3.exe と同じフォルダの *.dll（このバージョンから同梱）
+   ライセンス: MIT
+   リポジトリ・ライセンス全文: https://github.com/dotnet/runtime / https://github.com/dotnet/winforms
+                               （各リポジトリの LICENSE.TXT）
+
+
+5. 同梱していないもの（別途必要）
+   - Microsoft Edge WebView2 ランタイム（Windows 11 は標準搭載）
+     提供元のライセンスに従います。
