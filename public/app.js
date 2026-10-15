@@ -144,6 +144,24 @@ function buildArgs() {
   });
 }
 
+/**
+ * 例外オブジェクトから表示用の文字列を取り出す。
+ * ffmpeg.wasm のワーカーはエラーを文字列で返すため、Error 以外（文字列など）も扱う
+ * @param {unknown} e 捕捉した値
+ * @returns {string} 表示用のメッセージ
+ */
+function errorText(e) {
+  if (e instanceof Error && e.message) return e.message;
+  if (typeof e === 'string' && e) return e;
+  if (e && typeof e === 'object' && typeof e.message === 'string' && e.message) return e.message;
+  try {
+    const text = String(e);
+    return text && text !== '[object Object]' ? text : '原因不明のエラー';
+  } catch {
+    return '原因不明のエラー';
+  }
+}
+
 /** 新しいFFmpegインスタンスを作成してイベントを登録する */
 function createFFmpeg() {
   const instance = new FFmpeg();
@@ -329,7 +347,7 @@ async function togglePlay() {
     await audio.play();
   } catch (e) {
     console.error('再生に失敗:', e);
-    showError(`再生できませんでした: ${e.message}`);
+    showError(`再生できませんでした: ${errorText(e)}`);
   }
 }
 
@@ -471,7 +489,7 @@ async function generateWaveform(file) {
       showError(NO_AUDIO_MESSAGE);
       setStatus('');
     } else {
-      setStatus('波形を生成できませんでした。変換は実行できます。');
+      setStatus(`波形を生成できませんでした（${errorText(e)}）。変換は実行できます。`);
     }
   } finally {
     if (jobId === waveJobId) {
@@ -532,7 +550,7 @@ async function convert() {
   try {
     args = buildArgs();
   } catch (e) {
-    showError(e.message);
+    showError(errorText(e));
     return;
   }
 
@@ -571,7 +589,7 @@ async function convert() {
       return;
     }
     const tail = ffmpegLog.slice(-3).join('\n');
-    showError(`変換に失敗しました: ${e.message}${tail ? '\n\n' + tail : ''}\n\n大きなファイルの場合はメモリ不足の可能性があります。`);
+    showError(`変換に失敗しました: ${errorText(e)}${tail ? '\n\n' + tail : ''}\n\n大きなファイルの場合はメモリ不足の可能性があります。`);
     setStatus('');
     setProgress(null);
   } finally {

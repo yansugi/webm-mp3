@@ -18,12 +18,13 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="[1.0.4191.47]" />
   </ItemGroup>
 
-  <!-- 画面(public)とffmpeg.wasm一式を、出力先の www/ 配下に配置する -->
+  <!-- 画面(public)とffmpeg.wasm一式を、出力先の www/ 配下に配置する。
+       単一ファイル発行でも exe に取り込まず、www/ に実ファイルとして残す（WebView2 が URL で配信するため） -->
   <ItemGroup>
-    <Content Include="..\public\**\*" Link="www\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\node_modules\@ffmpeg\ffmpeg\dist\esm\*.js" Link="www\vendor\ffmpeg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\node_modules\@ffmpeg\core\dist\esm\ffmpeg-core.js" Link="www\vendor\core\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\node_modules\@ffmpeg\core\dist\esm\ffmpeg-core.wasm" Link="www\vendor\core\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\public\**\*" Link="www\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="..\node_modules\@ffmpeg\ffmpeg\dist\esm\*.js" Link="www\vendor\ffmpeg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="..\node_modules\@ffmpeg\core\dist\esm\ffmpeg-core.js" Link="www\vendor\core\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="..\node_modules\@ffmpeg\core\dist\esm\ffmpeg-core.wasm" Link="www\vendor\core\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
 </Project>
